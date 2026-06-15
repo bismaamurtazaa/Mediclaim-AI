@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediClaim AI — Smart Claim Processing & Fraud Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --navy:#0A1628;
+  --navy-2:#0E1F38;
+  --navy-3:#13294A;
+  --blue:#2563EB;
+  --blue-soft:rgba(37,99,235,.16);
+  --green:#10B981;
+  --green-soft:rgba(16,185,129,.14);
+  --red:#EF4444;
+  --red-soft:rgba(239,68,68,.14);
+  --amber:#F59E0B;
+  --amber-soft:rgba(245,158,11,.15);
+  --white:#FFFFFF;
+  --text:#E6EDF7;
+  --muted:#8FA3C0;
+  --line:rgba(143,163,192,.16);
+  --glass:rgba(19,41,74,.42);
+  --glass-strong:rgba(14,31,56,.72);
+  --shadow:0 24px 60px rgba(2,8,20,.55);
+  --radius:18px;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-display:'Space Grotesk',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-body);
+  background:var(--navy);
+  color:var(--text);
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(37,99,235,.45);color:#fff;}
+h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font-family:inherit;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(143,163,192,.25);border-radius:99px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(143,163,192,.4);}
+
+/* ---------- 3D canvas ---------- */
+#bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.bg-vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(1200px 700px at 70% -10%, rgba(37,99,235,.14), transparent 60%),
+             radial-gradient(900px 600px at 8% 110%, rgba(16,185,129,.08), transparent 55%),
+             radial-gradient(ellipse at center, transparent 40%, rgba(4,10,22,.55) 100%);}
+
+/* ---------- Screens ---------- */
+.screen{position:relative;z-index:2;min-height:100vh;display:none;}
+.screen.active{display:block;}
+
+/* ---------- Topbar ---------- */
+#topbar{
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);
+  z-index:50;width:min(1240px,calc(100% - 28px));
+  display:none;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 14px 10px 18px;border-radius:16px;
+  background:var(--glass-strong);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line);box-shadow:var(--shadow);
+}
+#topbar .brand-mini{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:600;font-size:15px;}
+#topbar .brand-mini svg{width:26px;height:26px;}
+.role-chip{
+  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);
+  padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:rgba(37,99,235,.08);
+}
+.role-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.bell-wrap{position:relative;}
+.bell-btn{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  border:1px solid var(--line);background:rgba(255,255,255,.03);transition:.25s;
+}
+.bell-btn:hover{background:var(--blue-soft);border-color:rgba(37,99,235,.5);transform:translateY(-1px);}
+.bell-btn svg{width:18px;height:18px;stroke:var(--text);}
+.bell-badge{
+  position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;
+  border-radius:99px;background:var(--red);color:#fff;font-size:10.5px;font-weight:700;
+  display:grid;place-items:center;box-shadow:0 0 0 3px var(--navy);
+}
+.notif-panel{
+  position:absolute;right:0;top:48px;width:300px;border-radius:14px;overflow:hidden;
+  background:var(--glass-strong);backdrop-filter:blur(20px);border:1px solid var(--line);
+  box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(-6px);transition:.25s;
+}
+.notif-panel.open{opacity:1;pointer-events:auto;transform:translateY(0);}
+.notif-panel header{padding:12px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--line);font-family:var(--font-display);}
+.notif-item{display:flex;gap:10px;padding:12px 16px;font-size:12.5px;border-bottom:1px solid var(--line);color:var(--muted);}
+.notif-item:last-child{border-bottom:none;}
+.notif-item b{color:var(--text);font-weight:600;}
+.notif-item .ndot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:none;}
+.btn-logout{
+  display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+  padding:9px 16px;border-radius:12px;color:#fff;
+  background:linear-gradient(135deg,var(--blue),#1D4ED8);
+  box-shadow:0 8px 22px rgba(37,99,235,.35);transition:.25s;
+}
+.btn-logout:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(37,99,235,.5);}
+
+/* ---------- Login ---------- */
+#screen-login{display:none;align-items:center;justify-content:center;padding:32px 18px;}
+#screen-login.active{display:flex;}
+.login-card{
+  width:min(560px,100%);text-align:center;padding:54px 44px 46px;
+  border-radius:28px;background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border:1px solid var(--line);box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.login-card::before{
+  content:"";position:absolute;inset:-1px;border-radius:28px;padding:1px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(37,99,235,.55),transparent 35%,transparent 65%,rgba(16,185,129,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+}
+.logo-mark{width:84px;height:84px;margin:0 auto 18px;position:relative;}
+.logo-mark .pulse-ring{
+  position:absolute;inset:-14px;border-radius:50%;border:1.5px solid rgba(37,99,235,.45);
+  animation:ringPulse 2.6s ease-out infinite;
+}
+.logo-mark .pulse-ring:nth-child(2){animation-delay:1.3s;}
+@keyframes ringPulse{0%{transform:scale(.6);opacity:0;}35%{opacity:.8;}100%{transform:scale(1.25);opacity:0;}}
+.login-card h1{font-size:clamp(30px,5vw,40px);font-weight:700;color:#fff;}
+.login-card h1 span{background:linear-gradient(90deg,#60A5FA,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.login-sub{margin-top:10px;color:var(--muted);font-size:14.5px;line-height:1.6;}
+.login-roles{margin-top:34px;display:grid;gap:13px;}
+.role-btn{
+  display:flex;align-items:center;gap:16px;text-align:left;
+  padding:16px 18px;border-radius:16px;border:1px solid var(--line);
+  background:rgba(255,255,255,.035);transition:.28s cubic-bezier(.2,.7,.3,1);position:relative;overflow:hidden;
+}
+.role-btn .ri{
+  width:46px;height:46px;flex:none;border-radius:13px;display:grid;place-items:center;
+  background:var(--blue-soft);border:1px solid rgba(37,99,235,.35);transition:.28s;
+}
+.role-btn .ri svg{width:22px;height:22px;stroke:#7FB0FF;}
+.role-btn .rt b{display:block;font-family:var(--font-display);font-size:15.5px;color:#fff;}
+.role-btn .rt span{display:block;margin-top:3px;font-size:12.5px;color:var(--muted);}
+.role-btn .arrow{margin-left:auto;opacity:0;transform:translateX(-8px);transition:.28s;color:#7FB0FF;font-size:18px;}
+.role-btn:hover{transform:translateY(-3px);border-color:rgba(37,99,235,.6);background:var(--blue-soft);box-shadow:0 18px 40px rgba(37,99,235,.22);}
+.role-btn:hover .arrow{opacity:1;transform:translateX(0);}
+.role-btn:hover .ri{transform:scale(1.07) rotate(-4deg);}
+.login-foot{margin-top:30px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(143,163,192,.55);}
+.login-foot b{color:var(--green);}
+.quick-fill{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 4px;border-radius:10px;
+  background:rgba(37,99,235,.08);border:1px solid var(--line);color:var(--muted);font-size:11.5px;font-weight:600;
+  cursor:pointer;transition:all .18s ease;font-family:inherit;}
+.quick-fill span{font-size:11px;}
+.quick-fill:hover{background:rgba(37,99,235,.18);border-color:var(--blue);color:#cfe0ff;transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(37,99,235,.25);}
+.quick-fill:active{transform:translateY(0);}
+
+/* ---------- Layout: shell with sidebar ---------- */
+.shell{display:flex;min-height:100vh;padding-top:78px;}
+.sidebar{
+  position:fixed;left:14px;top:92px;bottom:14px;width:230px;z-index:40;
+  display:flex;flex-direction:column;gap:6px;padding:18px 12px;
+  border-radius:20px;background:var(--glass-strong);backdrop-filter:blur(18px);
+  border:1px solid var(--line);box-shadow:var(--shadow);
+}
+.sidebar .s-label{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(143,163,192,.6);padding:8px 12px 6px;}
+.snav{
+  display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:12px;
+  font-size:13.5px;font-weight:500;color:var(--muted);transition:.22s;width:100%;text-align:left;
+}
+.snav svg{width:18px;height:18px;stroke:currentColor;flex:none;}
+.snav:hover{color:#fff;background:rgba(255,255,255,.05);transform:translateX(3px);}
+.snav.active{color:#fff;background:linear-gradient(135deg,rgba(37,99,235,.35),rgba(37,99,235,.12));border:1px solid rgba(37,99,235,.4);}
+.sidebar .spacer{flex:1;}
+.ai-pill{
+  margin:0 6px;padding:14px;border-radius:14px;font-size:12px;line-height:1.55;color:var(--muted);
+  background:linear-gradient(150deg,rgba(16,185,129,.12),rgba(37,99,235,.1));border:1px solid rgba(16,185,129,.25);
+}
+.ai-pill b{color:var(--green);font-family:var(--font-display);display:flex;align-items:center;gap:7px;font-size:12.5px;margin-bottom:4px;}
+.ai-pill .live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.6s infinite;}
+@keyframes blink{50%{opacity:.25;}}
+.main{flex:1;margin-left:262px;padding:18px 26px 60px;min-width:0;}
+
+/* ---------- Page headers ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:8px 0 24px;}
+.page-head h2{font-size:clamp(24px,3.2vw,32px);color:#fff;}
+.page-head p{margin-top:6px;color:var(--muted);font-size:14px;}
+.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#7FB0FF;font-weight:600;margin-bottom:8px;display:block;}
+
+/* ---------- Stats ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.stat-card{
+  position:relative;padding:22px;border-radius:var(--radius);overflow:hidden;
+  background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);
+  transition:.3s cubic-bezier(.2,.7,.3,1);
+}
+.stat-card:hover{transform:translateY(-5px);box-shadow:0 22px 44px rgba(2,8,20,.5);border-color:rgba(37,99,235,.45);}
+.stat-card .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;margin-bottom:14px;}
+.stat-card .ic svg{width:19px;height:19px;}
+.stat-card .num{font-family:var(--font-display);font-size:34px;font-weight:700;color:#fff;line-height:1;}
+.stat-card .lbl{margin-top:7px;font-size:13px;color:var(--muted);}
+.stat-card .trend{position:absolute;top:20px;right:20px;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:99px;}
+.t-up{color:var(--green);background:var(--green-soft);}
+.t-down{color:var(--red);background:var(--red-soft);}
+.t-flat{color:var(--amber);background:var(--amber-soft);}
+.stat-card .spark{position:absolute;bottom:0;left:0;right:0;height:42px;opacity:.5;}
+
+/* ---------- Glass panel / table ---------- */
+.panel{
+  margin-top:22px;border-radius:var(--radius);overflow:hidden;
+  background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.panel-head h3{font-size:17px;color:#fff;}
+.panel-head .ph-sub{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.btn-ghost{
+  font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:10px;
+  border:1px solid var(--line);color:var(--muted);transition:.22s;
+}
+.btn-ghost:hover{color:#fff;border-color:rgba(37,99,235,.55);background:var(--blue-soft);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px;}
+th{
+  text-align:left;padding:13px 22px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(143,163,192,.7);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:15px 22px;border-bottom:1px solid rgba(143,163,192,.08);white-space:nowrap;}
+tbody tr{transition:.2s;}
+tbody tr:hover{background:rgba(37,99,235,.07);}
+tbody tr:last-child td{border-bottom:none;}
+.claim-id{font-family:var(--font-display);font-weight:600;color:#7FB0FF;}
+.cell-main b{display:block;color:#fff;font-weight:600;}
+.cell-main span{font-size:12px;color:var(--muted);}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;}
+.badge .bdot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.b-green{color:#34D399;background:var(--green-soft);border:1px solid rgba(16,185,129,.3);}
+.b-amber{color:#FBBF24;background:var(--amber-soft);border:1px solid rgba(245,158,11,.3);}
+.b-red{color:#F87171;background:var(--red-soft);border:1px solid rgba(239,68,68,.32);}
+.b-blue{color:#7FB0FF;background:var(--blue-soft);border:1px solid rgba(37,99,235,.35);}
+.risk-pill{display:inline-flex;align-items:center;gap:9px;}
+.risk-bar{width:64px;height:5px;border-radius:99px;background:rgba(143,163,192,.18);overflow:hidden;}
+.risk-bar i{display:block;height:100%;border-radius:99px;width:0;}
+.amt{font-family:var(--font-display);font-weight:600;color:#fff;}
+
+/* ---------- FAB ---------- */
+.fab{
+  position:fixed;right:30px;bottom:30px;z-index:45;
+  display:flex;align-items:center;gap:10px;padding:16px 22px;border-radius:99px;
+  font-family:var(--font-display);font-weight:600;font-size:14.5px;color:#fff;
+  background:linear-gradient(135deg,var(--blue),#1D4ED8);
+  box-shadow:0 16px 40px rgba(37,99,235,.5);transition:.28s cubic-bezier(.2,.7,.3,1);
+}
+.fab svg{width:18px;height:18px;stroke:#fff;}
+.fab:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 24px 56px rgba(37,99,235,.65);}
+.fab:active{transform:scale(.97);}
+
+/* ---------- Claim form ---------- */
+.form-wrap{max-width:860px;margin:0 auto;}
+.progress-track{height:6px;border-radius:99px;background:rgba(143,163,192,.15);overflow:hidden;margin:6px 0 14px;}
+.progress-fill{height:100%;width:25%;border-radius:99px;background:linear-gradient(90deg,var(--blue),#60A5FA);box-shadow:0 0 16px rgba(37,99,235,.7);}
+.step-labels{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:26px;}
+.step-labels span{display:flex;align-items:center;gap:7px;transition:.3s;}
+.step-labels .sn{
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:700;
+  border:1px solid var(--line);background:rgba(255,255,255,.04);transition:.3s;
+}
+.step-labels span.done .sn,.step-labels span.cur .sn{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 14px rgba(37,99,235,.6);}
+.step-labels span.cur{color:#fff;font-weight:600;}
+.step-labels span.done{color:#7FB0FF;}
+.form-card{
+  position:relative;border-radius:22px;padding:34px;overflow:hidden;
+  background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:var(--shadow);
+  min-height:430px;
+}
+.fstep{display:none;}
+.fstep.cur{display:block;}
+.fstep h3{font-size:21px;color:#fff;margin-bottom:4px;}
+.fstep .fs-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.fgrid .full{grid-column:1/-1;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px;letter-spacing:.04em;}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;border-radius:12px;font-size:14px;color:#fff;
+  background:rgba(10,22,40,.55);border:1px solid var(--line);outline:none;transition:.25s;
+}
+.field textarea{resize:vertical;min-height:88px;}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.18);background:rgba(10,22,40,.8);transform:translateY(-1px);
+}
+.field select option{background:var(--navy-2);}
+.upload-zone{
+  border:1.5px dashed rgba(37,99,235,.45);border-radius:16px;padding:38px 22px;text-align:center;
+  background:rgba(37,99,235,.05);transition:.28s;cursor:pointer;
+}
+.upload-zone:hover{background:var(--blue-soft);border-color:var(--blue);transform:translateY(-2px);}
+.upload-zone svg{width:38px;height:38px;stroke:#7FB0FF;margin-bottom:10px;}
+.upload-zone b{display:block;font-family:var(--font-display);color:#fff;font-size:15px;}
+.upload-zone span{display:block;margin-top:5px;font-size:12.5px;color:var(--muted);}
+.doc-list{margin-top:16px;display:grid;gap:10px;}
+.doc-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;font-size:13px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line);
+}
+.doc-item .di{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--blue-soft);flex:none;}
+.doc-item .di svg{width:16px;height:16px;stroke:#7FB0FF;}
+.doc-item b{color:#fff;font-weight:600;display:block;}
+.doc-item span{font-size:11.5px;color:var(--muted);}
+.doc-item .ok{margin-left:auto;color:var(--green);font-size:12px;font-weight:600;}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 26px;font-size:13.5px;}
+.review-grid .rrow{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid rgba(143,163,192,.1);}
+.review-grid .rrow span{color:var(--muted);}
+.review-grid .rrow b{color:#fff;font-weight:600;text-align:right;}
+.ai-precheck{
+  margin-top:20px;display:flex;gap:13px;padding:15px 17px;border-radius:14px;font-size:13px;line-height:1.6;color:var(--muted);
+  background:var(--green-soft);border:1px solid rgba(16,185,129,.3);
+}
+.ai-precheck b{color:var(--green);}
+.form-nav{display:flex;justify-content:space-between;gap:12px;margin-top:28px;}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:14px;
+  padding:12px 22px;border-radius:13px;transition:.26s cubic-bezier(.2,.7,.3,1);
+}
+.btn-primary{color:#fff;background:linear-gradient(135deg,var(--blue),#1D4ED8);box-shadow:0 10px 26px rgba(37,99,235,.4);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(37,99,235,.55);}
+.btn-primary:active{transform:scale(.97);}
+.btn-sec{color:var(--muted);border:1px solid var(--line);}
+.btn-sec:hover{color:#fff;border-color:rgba(143,163,192,.45);background:rgba(255,255,255,.05);}
+.btn-green{color:#fff;background:linear-gradient(135deg,var(--green),#059669);box-shadow:0 10px 26px rgba(16,185,129,.4);}
+.btn-green:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(16,185,129,.55);}
+.btn-red{color:#fff;background:linear-gradient(135deg,var(--red),#DC2626);box-shadow:0 10px 26px rgba(239,68,68,.35);}
+.btn-red:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(239,68,68,.5);}
+.btn-amber{color:#1a1305;background:linear-gradient(135deg,#FBBF24,var(--amber));box-shadow:0 10px 26px rgba(245,158,11,.35);}
+.btn-amber:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(245,158,11,.5);}
+
+/* success */
+.success-view{display:none;text-align:center;padding:30px 10px 14px;}
+.success-view.show{display:block;}
+.check-wrap{width:110px;height:110px;margin:0 auto 22px;position:relative;}
+.check-wrap .glow{position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.35),transparent 70%);}
+.success-view h3{font-size:26px;color:#fff;}
+.success-view p{margin-top:10px;color:var(--muted);font-size:14px;line-height:1.7;}
+.success-view .sid{font-family:var(--font-display);color:var(--green);font-weight:700;}
+.success-actions{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* ---------- Officer review ---------- */
+.fraud-banner{
+  display:flex;align-items:center;gap:15px;padding:16px 20px;border-radius:16px;margin-bottom:22px;
+  background:linear-gradient(95deg,rgba(239,68,68,.18),rgba(239,68,68,.06));
+  border:1px solid rgba(239,68,68,.45);position:relative;overflow:hidden;
+}
+.fraud-banner::after{
+  content:"";position:absolute;inset:0;border-radius:16px;border:1px solid rgba(239,68,68,.6);
+  animation:bannerPulse 2s ease-out infinite;pointer-events:none;
+}
+@keyframes bannerPulse{0%{opacity:.9;transform:scale(1);}100%{opacity:0;transform:scale(1.012,1.18);}}
+.fraud-banner .fb-ic{
+  width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;
+  background:rgba(239,68,68,.2);animation:iconPulse 1.6s ease-in-out infinite;
+}
+@keyframes iconPulse{50%{transform:scale(1.12);box-shadow:0 0 24px rgba(239,68,68,.55);}}
+.fraud-banner .fb-ic svg{width:21px;height:21px;stroke:#F87171;}
+.fraud-banner b{color:#fff;font-family:var(--font-display);display:block;font-size:15px;}
+.fraud-banner span{font-size:12.5px;color:rgba(248,180,180,.85);}
+.fraud-banner .btn{margin-left:auto;flex:none;padding:9px 16px;font-size:12.5px;}
+
+.queue{display:grid;gap:14px;}
+.qcard{
+  border-radius:18px;background:var(--glass);backdrop-filter:blur(16px);
+  border:1px solid var(--line);overflow:hidden;transition:.28s;
+}
+.qcard:hover{border-color:rgba(37,99,235,.45);box-shadow:0 18px 40px rgba(2,8,20,.45);}
+.qcard.hi-risk{border-color:rgba(239,68,68,.4);}
+.q-top{display:flex;align-items:center;gap:18px;padding:18px 20px;cursor:pointer;user-select:none;flex-wrap:wrap;}
+.ring-wrap{position:relative;width:64px;height:64px;flex:none;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(143,163,192,.16);stroke-width:6;}
+.ring-val{fill:none;stroke-width:6;stroke-linecap:round;}
+.ring-num{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--font-display);font-weight:700;font-size:15px;color:#fff;
+}
+.q-info{flex:1;min-width:190px;}
+.q-info b{display:block;color:#fff;font-size:15.5px;font-family:var(--font-display);}
+.q-info .q-meta{margin-top:4px;font-size:12.5px;color:var(--muted);}
+.q-amount{text-align:right;}
+.q-amount .amt{font-size:17px;}
+.q-amount span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;}
+.q-chev{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;border:1px solid var(--line);transition:.3s;flex:none;}
+.q-chev svg{width:15px;height:15px;stroke:var(--muted);transition:.3s;}
+.qcard.open .q-chev{background:var(--blue-soft);border-color:rgba(37,99,235,.5);}
+.qcard.open .q-chev svg{transform:rotate(180deg);stroke:#7FB0FF;}
+.q-detail{height:0;overflow:hidden;}
+.q-detail-inner{padding:4px 20px 20px;border-top:1px solid var(--line);}
+.flag-list{display:grid;gap:9px;margin:16px 0 18px;}
+.flag{
+  display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.55;color:var(--muted);
+  padding:11px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+}
+.flag .fdot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none;}
+.flag b{color:#fff;}
+.q-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;}
+.q-fact{padding:12px 14px;border-radius:11px;background:rgba(10,22,40,.5);border:1px solid var(--line);}
+.q-fact span{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(143,163,192,.6);}
+.q-fact b{display:block;margin-top:5px;color:#fff;font-size:13.5px;font-weight:600;}
+.q-actions{display:flex;gap:11px;margin-top:18px;flex-wrap:wrap;}
+.q-actions .btn{padding:10px 18px;font-size:13px;}
+
+/* ---------- Policyholder ---------- */
+.track-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start;}
+.timeline-card{padding:28px;border-radius:20px;background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);}
+.timeline-card h3{font-size:18px;color:#fff;}
+.timeline-card .tc-sub{font-size:12.5px;color:var(--muted);margin-top:4px;}
+.tl{position:relative;margin-top:30px;padding-left:46px;}
+.tl svg.tl-path{position:absolute;left:14px;top:6px;height:calc(100% - 12px);width:4px;overflow:visible;}
+.tl-stage{position:relative;padding-bottom:34px;}
+.tl-stage:last-child{padding-bottom:4px;}
+.tl-node{
+  position:absolute;left:-46px;top:0;width:32px;height:32px;border-radius:50%;
+  display:grid;place-items:center;background:var(--navy-2);
+  border:2px solid rgba(143,163,192,.3);z-index:2;transition:.4s;
+}
+.tl-node svg{width:14px;height:14px;stroke:rgba(143,163,192,.6);transition:.4s;}
+.tl-stage.done .tl-node{border-color:var(--green);background:rgba(16,185,129,.18);box-shadow:0 0 18px rgba(16,185,129,.4);}
+.tl-stage.done .tl-node svg{stroke:var(--green);}
+.tl-stage.cur .tl-node{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 0 20px rgba(37,99,235,.55);animation:nodePulse 2s infinite;}
+.tl-stage.cur .tl-node svg{stroke:#7FB0FF;}
+@keyframes nodePulse{50%{box-shadow:0 0 32px rgba(37,99,235,.85);}}
+.tl-stage b{display:block;color:#fff;font-family:var(--font-display);font-size:15px;}
+.tl-stage .tl-when{font-size:11.5px;color:#7FB0FF;font-weight:600;margin-top:3px;display:block;}
+.tl-stage p{margin-top:6px;font-size:13px;line-height:1.6;color:var(--muted);max-width:46ch;}
+.tl-stage.todo b{color:rgba(230,237,247,.45);}
+.tl-stage.rejected .tl-node{border-color:var(--red);background:rgba(239,68,68,.18);box-shadow:0 0 18px rgba(239,68,68,.4);}
+.tl-stage.rejected .tl-node svg{stroke:var(--red);}
+.pc-list{display:flex;flex-direction:column;gap:8px;}
+.pc-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--line);cursor:pointer;transition:all .18s ease;}
+.pc-item:hover{background:rgba(37,99,235,.1);border-color:var(--blue);transform:translateX(2px);}
+.pc-item.sel{background:rgba(37,99,235,.16);border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset;}
+.pc-item .pc-l b{display:block;font-size:13px;color:#fff;font-family:var(--font-display);}
+.pc-item .pc-l span{font-size:11.5px;color:var(--muted);}
+.side-col{display:grid;gap:18px;}
+.mini-card{padding:22px;border-radius:18px;background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);}
+.mini-card h4{font-size:14.5px;color:#fff;margin-bottom:13px;}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(143,163,192,.1);font-size:13px;}
+.kv:last-child{border-bottom:none;}
+.kv span{color:var(--muted);}
+.kv b{color:#fff;font-weight:600;}
+.coverage-bar{height:8px;border-radius:99px;background:rgba(143,163,192,.15);overflow:hidden;margin-top:12px;}
+.coverage-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--green),#34D399);}
+.coverage-note{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:8px;}
+
+/* ---------- Toast ---------- */
+#toast-zone{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:90;display:grid;gap:10px;justify-items:center;}
+.toast{
+  display:flex;align-items:center;gap:11px;padding:13px 19px;border-radius:14px;font-size:13.5px;font-weight:500;color:#fff;
+  background:var(--glass-strong);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:var(--shadow);white-space:nowrap;
+}
+.toast .tdot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+/* ---------- Hamburger / responsive ---------- */
+.menu-btn{display:none;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);place-items:center;background:rgba(255,255,255,.03);}
+.menu-btn svg{width:18px;height:18px;stroke:var(--text);}
+@media (max-width:1080px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .track-grid{grid-template-columns:1fr;}
+}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-115%);transition:transform .35s cubic-bezier(.2,.7,.3,1);top:84px;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:14px 16px 80px;}
+  .menu-btn{display:grid;}
+  .fgrid{grid-template-columns:1fr;}
+  .review-grid{grid-template-columns:1fr;}
+  .form-card{padding:24px 20px;}
+  .fab{right:18px;bottom:18px;padding:14px 18px;}
+  #topbar .role-chip .rc-text{display:none;}
+}
+@media (max-width:540px){
+  .stats-grid{grid-template-columns:1fr 1fr;gap:11px;}
+  .stat-card{padding:16px;}
+  .stat-card .num{font-size:26px;}
+  .login-card{padding:38px 24px 34px;}
+  .q-amount{display:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg3d"></canvas>
+<div class="bg-vignette"></div>
+
+<!-- ============ TOPBAR ============ -->
+<nav id="topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="brand-mini">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 4 8 10v12c0 10.5 6.8 17.6 16 22 9.2-4.4 16-11.5 16-22V10L24 4z" fill="rgba(37,99,235,.25)" stroke="#2563EB" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M13 25h6l3-7 4.5 12 3-5H35" stroke="#10B981" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      MediClaim&nbsp;<span style="color:#7FB0FF;">AI</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="role-chip"><span class="dot"></span><span class="rc-text" id="roleLabel">Hospital</span></div>
+    <div class="bell-wrap">
+      <button class="bell-btn" id="bellBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      </button>
+      <span class="bell-badge" id="bellBadge">3</span>
+      <div class="notif-panel" id="notifPanel">
+        <header>Notifications</header>
+        <div class="notif-item"><span class="ndot" style="background:#EF4444;"></span><div><b>High-risk claim flagged</b> — CLM-2941 scored 87/100 on the fraud model.</div></div>
+        <div class="notif-item"><span class="ndot" style="background:#10B981;"></span><div><b>CLM-2933 approved</b> — PKR 184,000 payout scheduled.</div></div>
+        <div class="notif-item"><span class="ndot" style="background:#2563EB;"></span><div><b>Documents verified</b> — discharge summary for CLM-2938 passed OCR checks.</div></div>
+      </div>
+    </div>
+    <button class="btn-logout" id="logoutBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+      Logout
+    </button>
+  </div>
+</nav>
+
+<!-- ============ 1 · LOGIN ============ -->
+<section class="screen" id="screen-login">
+  <div class="login-card" id="loginCard">
+    <div class="logo-mark">
+      <span class="pulse-ring"></span><span class="pulse-ring"></span>
+      <svg viewBox="0 0 48 48" fill="none" width="84" height="84">
+        <path d="M24 4 8 10v12c0 10.5 6.8 17.6 16 22 9.2-4.4 16-11.5 16-22V10L24 4z" fill="rgba(37,99,235,.22)" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/>
+        <path id="pulseLine" d="M13 25h6l3-7 4.5 12 3-5H35" stroke="#10B981" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1>MediClaim <span>AI</span></h1>
+    <p class="login-sub">Smart health insurance claim processing with real-time fraud detection.<br>Choose your workspace to continue.</p>
+    <div class="login-form" style="display:grid;gap:14px;margin-top:28px;text-align:left;">
+      <div class="field">
+        <label>Email address</label>
+        <input type="email" id="loginEmail" placeholder="you@mediclaim.pk" autocomplete="email">
+      </div>
+      <div class="field" style="position:relative;">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="loginError" style="font-size:12.5px;color:var(--red);text-align:center;min-height:16px;margin-top:-4px;"></div>
+      <button class="btn btn-primary" id="loginBtn" style="width:100%;justify-content:center;padding:14px 22px;font-size:15px;">
+        Sign in &nbsp;→
+      </button>
+    </div>
+    <div style="margin-top:16px;padding:14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);text-align:left;">
+      <div style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(143,163,192,.7);font-weight:600;margin-bottom:10px;">Quick fill — demo accounts</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button type="button" class="quick-fill" data-email="hospital@mediclaim.pk" data-pass="Hospital@123">🏥<span>Hospital</span></button>
+        <button type="button" class="quick-fill" data-email="officer@mediclaim.pk" data-pass="Officer@123">🛡️<span>Officer</span></button>
+        <button type="button" class="quick-fill" data-email="policy@mediclaim.pk" data-pass="Policy@123">👤<span>Policyholder</span></button>
+      </div>
+    </div>
+    <div class="login-foot">Fraud engine <b>online</b> · 12,400+ claims screened this month</div>
+  </div>
+</section>
+
+<!-- ============ 2 · HOSPITAL DASHBOARD ============ -->
+<section class="screen" id="screen-hospital">
+  <div class="shell">
+    <aside class="sidebar" id="sidebar-hospital">
+      <span class="s-label">Hospital Portal</span>
+      <button class="snav active"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
+      <button class="snav" data-goto="screen-form"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>New Claim</button>
+      <div class="spacer"></div>
+      <div class="ai-pill"><b><span class="live"></span>Fraud engine live</b>Every claim is screened across 42 risk signals before review.</div>
+    </aside>
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <span class="eyebrow">Aga Khan University Hospital · Karachi</span>
+          <h2>Claims Dashboard</h2>
+          <p>Welcome back, Dr. Sana Malik — here's how your claims are moving today.</p>
+        </div>
+        <button class="btn-ghost" data-toast="Report exported as PDF — check your downloads.">Export report</button>
+      </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <span class="trend t-up">+12.4%</span>
+          <div class="ic" style="background:var(--blue-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="#7FB0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></div>
+          <div class="num" data-count="1248">0</div>
+          <div class="lbl">Total claims</div>
+        </div>
+        <div class="stat-card">
+          <span class="trend t-flat">38 today</span>
+          <div class="ic" style="background:var(--amber-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+          <div class="num" data-count="86">0</div>
+          <div class="lbl">Pending review</div>
+        </div>
+        <div class="stat-card">
+          <span class="trend t-up">+5.1%</span>
+          <div class="ic" style="background:var(--green-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></div>
+          <div class="num" data-count="1094">0</div>
+          <div class="lbl">Approved</div>
+        </div>
+        <div class="stat-card">
+          <span class="trend t-down">-2.3%</span>
+          <div class="ic" style="background:var(--red-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div>
+          <div class="num" data-count="68">0</div>
+          <div class="lbl">Rejected</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>Recent claims</h3><div class="ph-sub">AI fraud score recalculates as documents are verified</div></div>
+          <button class="btn-ghost" data-toast="Showing all 1,248 claims — filters reset.">View all</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Claim ID</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Fraud risk</th><th>Status</th></tr></thead>
+            <tbody id="hospitalRows">
+              <tr><td class="claim-id">CLM-2941</td><td class="cell-main"><b>Imran Qureshi</b><span>Policy AK-88231</span></td><td>Cardiac bypass surgery</td><td class="amt">PKR 1,450,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="87" style="background:#EF4444;"></i></span><span class="badge b-red"><span class="bdot"></span>87 High</span></span></td><td><span class="badge b-amber"><span class="bdot"></span>Pending</span></td></tr>
+              <tr><td class="claim-id">CLM-2938</td><td class="cell-main"><b>Ayesha Siddiqui</b><span>Policy AK-77104</span></td><td>Maternity — C-section</td><td class="amt">PKR 320,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="12" style="background:#10B981;"></i></span><span class="badge b-green"><span class="bdot"></span>12 Low</span></span></td><td><span class="badge b-green"><span class="bdot"></span>Approved</span></td></tr>
+              <tr><td class="claim-id">CLM-2936</td><td class="cell-main"><b>Bilal Ahmed Khan</b><span>Policy AK-90412</span></td><td>Knee replacement</td><td class="amt">PKR 685,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="54" style="background:#F59E0B;"></i></span><span class="badge b-amber"><span class="bdot"></span>54 Medium</span></span></td><td><span class="badge b-amber"><span class="bdot"></span>Pending</span></td></tr>
+              <tr><td class="claim-id">CLM-2933</td><td class="cell-main"><b>Fatima Noor</b><span>Policy AK-66019</span></td><td>Appendectomy</td><td class="amt">PKR 184,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="8" style="background:#10B981;"></i></span><span class="badge b-green"><span class="bdot"></span>8 Low</span></span></td><td><span class="badge b-green"><span class="bdot"></span>Approved</span></td></tr>
+              <tr><td class="claim-id">CLM-2929</td><td class="cell-main"><b>Hamza Sheikh</b><span>Policy AK-71550</span></td><td>Dialysis — 12 sessions</td><td class="amt">PKR 432,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="91" style="background:#EF4444;"></i></span><span class="badge b-red"><span class="bdot"></span>91 High</span></span></td><td><span class="badge b-red"><span class="bdot"></span>Rejected</span></td></tr>
+              <tr><td class="claim-id">CLM-2925</td><td class="cell-main"><b>Zainab Raza</b><span>Policy AK-83327</span></td><td>Chemotherapy cycle 3</td><td class="amt">PKR 910,000</td><td><span class="risk-pill"><span class="risk-bar"><i data-risk="21" style="background:#10B981;"></i></span><span class="badge b-green"><span class="bdot"></span>21 Low</span></span></td><td><span class="badge b-green"><span class="bdot"></span>Approved</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="fab" data-goto="screen-form"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Submit new claim</button>
+</section>
+
+<!-- ============ 3 · CLAIM SUBMISSION FORM ============ -->
+<section class="screen" id="screen-form">
+  <div class="shell">
+    <div class="main" style="margin-left:0;max-width:1000px;margin-inline:auto;">
+      <div class="form-wrap">
+        <div class="page-head" style="margin-bottom:14px;">
+          <div>
+            <span class="eyebrow">New claim · Liaquat National Hospital</span>
+            <h2>Submit a Claim</h2>
+          </div>
+          <button class="btn-ghost" data-goto="screen-hospital">← Back to dashboard</button>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="step-labels" id="stepLabels">
+          <span class="cur"><span class="sn">1</span>Patient info</span>
+          <span><span class="sn">2</span>Treatment</span>
+          <span><span class="sn">3</span>Documents</span>
+          <span><span class="sn">4</span>Review</span>
+        </div>
+        <div class="form-card" id="formCard">
+          <!-- step 1 -->
+          <div class="fstep cur" data-step="1">
+            <h3>Patient information</h3>
+            <p class="fs-sub">Details must match the patient's CNIC and policy record exactly.</p>
+            <div class="fgrid">
+              <div class="field"><label>Full name</label><input id="f-name" type="text" placeholder="e.g. Muhammad Usman Tariq"></div>
+              <div class="field"><label>CNIC number</label><input id="f-cnic" type="text" placeholder="e.g. 42101-5566778-3"></div>
+              <div class="field"><label>Policy number</label><input id="f-policy" type="text" placeholder="e.g. LN-44910"></div>
+              <div class="field"><label>Date of birth</label><input id="f-dob" type="date"></div>
+              <div class="field"><label>Contact number</label><input id="f-contact" type="tel" placeholder="e.g. +92 300 2456789"></div>
+              <div class="field"><label>Relationship to policy</label><select id="f-relation"><option value="">Select relationship</option><option>Self</option><option>Spouse</option><option>Child</option><option>Parent</option></select></div>
+            </div>
+          </div>
+          <!-- step 2 -->
+          <div class="fstep" data-step="2">
+            <h3>Treatment details</h3>
+            <p class="fs-sub">The fraud engine cross-checks these against admission records and historical billing.</p>
+            <div class="fgrid">
+              <div class="field"><label>Hospital</label><select id="f-hospital"><option value="">Select hospital</option><option>Liaquat National Hospital, Karachi</option><option>Aga Khan University Hospital, Karachi</option><option>Indus Hospital, Karachi</option><option>Shaukat Khanum Memorial, Lahore</option><option>Jinnah Postgraduate Medical Centre</option></select></div>
+              <div class="field"><label>Treating doctor</label><input id="f-doctor" type="text" placeholder="e.g. Dr. Adeel Hussain"></div>
+              <div class="field"><label>Admission date</label><input id="f-admission" type="date"></div>
+              <div class="field"><label>Discharge date</label><input id="f-discharge" type="date"></div>
+              <div class="field"><label>Diagnosis (ICD-10)</label><input id="f-diagnosis" type="text" placeholder="e.g. K35.8 — Acute appendicitis"></div>
+              <div class="field"><label>Claimed amount (PKR)</label><input id="f-amount" type="text" placeholder="e.g. 196,500"></div>
+              <div class="field full"><label>Treatment summary</label><textarea id="f-summary" placeholder="Brief summary of treatment received..."></textarea></div>
+            </div>
+          </div>
+          <!-- step 3 -->
+          <div class="fstep" data-step="3">
+            <h3>Document upload</h3>
+            <p class="fs-sub">Documents are OCR-scanned and matched against the claim within seconds.</p>
+            <div class="upload-zone" id="uploadZone">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
+              <b>Drop files or click to upload</b>
+              <span>PDF, JPG or PNG · max 10 MB each</span>
+            </div>
+            <div class="doc-list" id="docList">
+              <div class="doc-item"><span class="di"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/></svg></span><div><b>discharge-summary.pdf</b><span>1.2 MB · verified by OCR</span></div><span class="ok">✓ Verified</span></div>
+              <div class="doc-item"><span class="di"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/></svg></span><div><b>itemized-bill.pdf</b><span>840 KB · verified by OCR</span></div><span class="ok">✓ Verified</span></div>
+            </div>
+          </div>
+          <!-- step 4 -->
+          <div class="fstep" data-step="4">
+            <h3>Review &amp; submit</h3>
+            <p class="fs-sub">One last look before this goes to the insurance officer's queue.</p>
+            <div class="review-grid">
+              <div class="rrow"><span>Patient</span><b>Muhammad Usman Tariq</b></div>
+              <div class="rrow"><span>Policy</span><b>LN-44910</b></div>
+              <div class="rrow"><span>Hospital</span><b>Liaquat National Hospital</b></div>
+              <div class="rrow"><span>Doctor</span><b>Dr. Adeel Hussain</b></div>
+              <div class="rrow"><span>Diagnosis</span><b>K35.8 — Acute appendicitis</b></div>
+              <div class="rrow"><span>Stay</span><b>2 – 7 Jun 2026 (5 days)</b></div>
+              <div class="rrow"><span>Documents</span><b>3 verified</b></div>
+              <div class="rrow"><span>Claimed amount</span><b>PKR 196,500</b></div>
+            </div>
+            <div class="ai-precheck">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px;"><path d="M12 3 4 6v6c0 5 3.4 8.6 8 11 4.6-2.4 8-6 8-11V6l-8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+              <div><b>AI pre-check passed · risk score 11/100.</b> Billing is consistent with the diagnosis, the hospital tariff, and this patient's history. Expected review time: under 24 hours.</div>
+            </div>
+          </div>
+          <!-- success -->
+          <div class="success-view" id="successView">
+            <div class="check-wrap">
+              <div class="glow"></div>
+              <svg viewBox="0 0 110 110" width="110" height="110">
+                <circle id="sCircle" cx="55" cy="55" r="48" fill="none" stroke="#10B981" stroke-width="4" stroke-linecap="round"/>
+                <path id="sTick" d="M34 57l14 14 28-32" fill="none" stroke="#10B981" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Claim submitted</h3>
+            <p>Claim <span class="sid">CLM-2947</span> is now in the review queue.<br>Muhammad Usman Tariq will get an SMS the moment its status changes.</p>
+            <div class="success-actions">
+              <button class="btn btn-primary" data-goto="screen-hospital">Back to dashboard</button>
+              <button class="btn btn-sec" id="newClaimBtn">Submit another claim</button>
+            </div>
+          </div>
+          <div class="form-nav" id="formNav">
+            <button class="btn btn-sec" id="prevBtn" style="visibility:hidden;">← Previous</button>
+            <button class="btn btn-primary" id="nextBtn">Continue →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · OFFICER REVIEW ============ -->
+<section class="screen" id="screen-officer">
+  <div class="shell">
+    <aside class="sidebar" id="sidebar-officer">
+      <span class="s-label">Insurance Officer</span>
+      <button class="snav active"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M9 18h6"/></svg>Review queue</button>
+      <div class="spacer"></div>
+      <div class="ai-pill"><b><span class="live"></span>42 signals active</b>Duplicate billing, phantom procedures, upcoding, identity mismatch & more.</div>
+    </aside>
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <span class="eyebrow">Review queue · 5 claims awaiting decision</span>
+          <h2>Claims Review</h2>
+          <p>Sorted by AI fraud score — highest risk first, Officer Nadia Hassan.</p>
+        </div>
+        <button class="btn-ghost" data-toast="Queue refreshed — no new claims in the last 5 minutes.">Refresh queue</button>
+      </div>
+      <div class="fraud-banner" id="fraudBanner">
+        <div class="fb-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div><b>2 high-risk claims need urgent attention</b><span>CLM-2929 and CLM-2941 scored above the 80-point fraud threshold.</span></div>
+        <button class="btn btn-red" data-toast="Jumped to the highest-risk claim.">Review now</button>
+      </div>
+      <div class="queue" id="queue"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · POLICYHOLDER TRACKING ============ -->
+<section class="screen" id="screen-policy">
+  <div class="shell">
+    <aside class="sidebar" id="sidebar-policy">
+      <span class="s-label">My Insurance</span>
+      <button class="snav active"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Track claim</button>
+      <div class="spacer"></div>
+      <div class="ai-pill"><b><span class="live"></span>Live updates on</b>You'll get an SMS and an in-app alert at every stage of your claim.</div>
+    </aside>
+    <div class="main">
+      <div class="page-head">
+        <div>
+          <span class="eyebrow">Salaam, Ayesha Siddiqui 👋</span>
+          <h2>Track Your Claim</h2>
+          <p id="policySubtitle">Tap any claim on the right to see its live status.</p>
+        </div>
+      </div>
+      <div class="track-grid">
+        <div class="timeline-card" id="policyTimeline"></div>
+        <div class="side-col">
+          <div class="mini-card">
+            <h4>Coverage this year</h4>
+            <div class="kv"><span>Plan</span><b>Family Health Plus</b></div>
+            <div class="kv"><span>Annual limit</span><b>PKR 1,500,000</b></div>
+            <div class="kv"><span>Used so far</span><b id="coverageUsed">PKR 0</b></div>
+            <div class="coverage-bar"><i id="coverageFill" data-pct="0"></i></div>
+            <div class="coverage-note"><span id="coveragePctNote">0% used</span><span id="coverageRemNote">PKR 1,500,000 remaining</span></div>
+          </div>
+          <div class="mini-card">
+            <h4>My claims — tap any to track</h4>
+            <div id="policyClaimList" class="pc-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="toast-zone"></div>
+<script>
+/* =====================================================
+   MediClaim AI v2 — localStorage + real auth
+===================================================== */
+gsap.registerPlugin(ScrollTrigger);
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ====================================================
+   DATA LAYER — localStorage
+==================================================== */
+const SEED_CLAIMS = [
+  { id:'CLM-2941', patientName:'Imran Qureshi',    cnic:'42101-1122334-5', policy:'AK-88231', dob:'1975-08-22', contact:'+92 300 1234567', relationship:'Self', hospital:'Aga Khan University Hospital, Karachi',    doctor:'Dr. Shazia Iqbal',   admissionDate:'2026-05-28', dischargeDate:'2026-06-08', diagnosis:'Cardiac bypass surgery',      amount:1450000, treatment:'Cardiac bypass surgery',      fraudScore:87, status:'pending',  flags:[['#EF4444','<b>Phantom procedure risk:</b> billed angiography has no matching entry in the cath-lab log.'],['#F59E0B','<b>Upcoding signal:</b> ICD code billed at a higher complexity tier than the discharge summary supports.'],['#F59E0B','<b>Timing:</b> claim filed 4 days before policy upgrade took effect.']] },
+  { id:'CLM-2938', patientName:'Ayesha Siddiqui',  cnic:'42201-9988776-4', policy:'AK-77104', dob:'1992-03-18', contact:'+92 312 9876543', relationship:'Self', hospital:'Aga Khan University Hospital, Karachi',    doctor:'Dr. Farah Naz',      admissionDate:'2026-06-04', dischargeDate:'2026-06-07', diagnosis:'Maternity — C-section',        amount:320000,  treatment:'Maternity — C-section',        fraudScore:12, status:'approved', flags:[['#10B981','<b>All checks passed:</b> billing consistent with diagnosis, tariff, and patient history.']] },
+  { id:'CLM-2936', patientName:'Bilal Ahmed Khan',  cnic:'42301-5544332-1', policy:'SK-90412', dob:'1968-11-05', contact:'+92 321 5551234', relationship:'Self', hospital:'Shaukat Khanum Memorial, Lahore',           doctor:'Dr. Omar Farooq',    admissionDate:'2026-06-01', dischargeDate:'2026-06-06', diagnosis:'Knee replacement',              amount:685000,  treatment:'Knee replacement',              fraudScore:54, status:'pending',  flags:[['#F59E0B','<b>Document gap:</b> pre-authorization form was uploaded after admission, not before.'],['#10B981','<b>History clean:</b> policyholder has 6 years with zero flagged claims.']] },
+  { id:'CLM-2933', patientName:'Fatima Noor',       cnic:'42101-6677889-9', policy:'AK-66019', dob:'1998-07-14', contact:'+92 333 7654321', relationship:'Self', hospital:'Aga Khan University Hospital, Karachi',    doctor:'Dr. Adeel Hussain',  admissionDate:'2026-05-30', dischargeDate:'2026-06-02', diagnosis:'Appendectomy',                  amount:184000,  treatment:'Appendectomy',                  fraudScore:8,  status:'approved', flags:[['#10B981','<b>All checks passed:</b> billing consistent with diagnosis and hospital tariff.']] },
+  { id:'CLM-2929', patientName:'Hamza Sheikh',      cnic:'42401-3322110-7', policy:'IN-71550', dob:'1955-02-28', contact:'+92 345 1122334', relationship:'Self', hospital:'Indus Hospital, Karachi',                  doctor:'Dr. Kamran Aziz',    admissionDate:'2026-05-14', dischargeDate:'2026-06-09', diagnosis:'Dialysis — 12 sessions',        amount:432000,  treatment:'Dialysis — 12 sessions',        fraudScore:91, status:'rejected', flags:[['#EF4444','<b>Duplicate billing:</b> 4 session invoices match claim CLM-2716 filed in March.'],['#EF4444','<b>Provider pattern:</b> this billing desk has a 3.2× higher rejection rate than network average.'],['#F59E0B','<b>Tariff anomaly:</b> per-session cost is 38% above the contracted dialysis rate.']] },
+  { id:'CLM-2925', patientName:'Zainab Raza',       cnic:'42101-7788990-2', policy:'AK-83327', dob:'1980-09-10', contact:'+92 300 9988776', relationship:'Self', hospital:'Aga Khan University Hospital, Karachi',    doctor:'Dr. Sara Malik',     admissionDate:'2026-05-20', dischargeDate:'2026-05-22', diagnosis:'Chemotherapy cycle 3',          amount:910000,  treatment:'Chemotherapy cycle 3',          fraudScore:21, status:'approved', flags:[['#10B981','<b>All checks passed:</b> treatment history, dosing, and billing all consistent.']] }
+];
+
+function initData() {
+  if (!localStorage.getItem('mc_claims')) localStorage.setItem('mc_claims', JSON.stringify(SEED_CLAIMS));
+  if (!localStorage.getItem('mc_ctr'))    localStorage.setItem('mc_ctr', '2950');
+}
+function getClaims()       { return JSON.parse(localStorage.getItem('mc_claims') || '[]'); }
+function saveClaims(c)     { localStorage.setItem('mc_claims', JSON.stringify(c)); }
+function addClaim(c)       { const cls=getClaims(); cls.unshift(c); saveClaims(cls); }
+function updateStatus(id,s){ const cls=getClaims(), i=cls.findIndex(c=>c.id===id); if(i!==-1){cls[i].status=s;saveClaims(cls);} }
+function nextId()          { const n=+localStorage.getItem('mc_ctr')+1; localStorage.setItem('mc_ctr',n); return 'CLM-'+n; }
+
+function calcFraudScore(amt) {
+  const base = amt>900000?50:amt>500000?30:amt>200000?15:8;
+  return Math.min(95, base + Math.floor(Math.random()*32));
+}
+function flagsFor(score) {
+  if(score>=70) return [
+    ['#EF4444','<b>Elevated risk detected:</b> billing pattern deviates significantly from expected range for this procedure.'],
+    ['#F59E0B','<b>Manual verification required:</b> recommend requesting original documents from the hospital.']
+  ];
+  if(score>=35) return [
+    ['#F59E0B','<b>Moderate risk:</b> one or more signals warrant a closer review before approval.'],
+    ['#10B981','<b>No duplicate billing detected:</b> claim ID is unique in the system.']
+  ];
+  return [['#10B981','<b>All checks passed:</b> billing consistent with diagnosis, tariff, and patient history. Fast-track eligible.']];
+}
+
+/* ====================================================
+   AUTH
+==================================================== */
+const USERS = {
+  'hospital@mediclaim.pk': { pw:'Hospital@123', role:'hospital',     name:'Dr. Sana Malik',   org:'Aga Khan University Hospital' },
+  'officer@mediclaim.pk':  { pw:'Officer@123',  role:'officer',      name:'Nadia Hassan',     org:'MediClaim Insurance Co.' },
+  'policy@mediclaim.pk':   { pw:'Policy@123',   role:'policyholder', name:'Ayesha Siddiqui',  org:'' }
+};
+let currentUser = null;
+
+/* ====================================================
+   THREE.JS PARTICLE BACKGROUND
+==================================================== */
+(function initBG(){
+  const canvas = $('#bg3d');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 1, 1200);
+  camera.position.z = 320;
+  const N = 850, pos = new Float32Array(N*3);
+  for(let i=0;i<N;i++){ pos[i*3]=(Math.random()-.5)*900; pos[i*3+1]=(Math.random()-.5)*560; pos[i*3+2]=(Math.random()-.5)*520; }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const mat = new THREE.PointsMaterial({size:2.1,color:0x4f86ff,transparent:true,opacity:.65,blending:THREE.AdditiveBlending,depthWrite:false});
+  const points = new THREE.Points(geo,mat);
+  scene.add(points);
+  const N2=220, pos2=new Float32Array(N2*3);
+  for(let i=0;i<N2;i++){ pos2[i*3]=(Math.random()-.5)*1000; pos2[i*3+1]=(Math.random()-.5)*620; pos2[i*3+2]=(Math.random()-.5)*560; }
+  const geo2=new THREE.BufferGeometry();
+  geo2.setAttribute('position',new THREE.BufferAttribute(pos2,3));
+  const dust=new THREE.Points(geo2,new THREE.PointsMaterial({size:1.5,color:0x10b981,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false}));
+  scene.add(dust);
+  const core=new THREE.Mesh(new THREE.IcosahedronGeometry(95,1),new THREE.MeshBasicMaterial({color:0x2563eb,wireframe:true,transparent:true,opacity:.12}));
+  scene.add(core);
+  let mx=0,my=0;
+  addEventListener('pointermove',e=>{mx=(e.clientX/innerWidth-.5);my=(e.clientY/innerHeight-.5);});
+  function resize(){ renderer.setSize(innerWidth,innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+  addEventListener('resize',resize); resize();
+  const clock=new THREE.Clock();
+  (function tick(){
+    requestAnimationFrame(tick);
+    if(reduceMotion){renderer.render(scene,camera);return;}
+    const t=clock.getElapsedTime();
+    points.rotation.y=t*.022; points.rotation.x=Math.sin(t*.12)*.05;
+    dust.rotation.y=-t*.014;
+    core.rotation.y=t*.1; core.rotation.x=t*.06;
+    camera.position.x+=(mx*46-camera.position.x)*.04;
+    camera.position.y+=(-my*30-camera.position.y)*.04;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  })();
+})();
+
+/* ====================================================
+   TOASTS
+==================================================== */
+function toast(msg, color='#2563EB'){
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span class="tdot" style="background:${color};box-shadow:0 0 10px ${color};"></span>${msg}`;
+  $('#toast-zone').appendChild(el);
+  gsap.fromTo(el,{y:24,opacity:0,scale:.95},{y:0,opacity:1,scale:1,duration:.45,ease:'back.out(1.6)'});
+  gsap.to(el,{y:14,opacity:0,duration:.4,delay:3,ease:'power2.in',onComplete:()=>el.remove()});
+}
+$$('[data-toast]').forEach(b=>b.addEventListener('click',()=>toast(b.dataset.toast)));
+
+/* ====================================================
+   SCREEN ROUTER
+==================================================== */
+const ROLE_HOME  = {hospital:'screen-hospital', officer:'screen-officer', policyholder:'screen-policy'};
+const ROLE_LABEL = {hospital:'Hospital · Aga Khan', officer:'Insurance Officer', policyholder:'Policyholder'};
+let currentScreen = 'screen-login';
+
+function showScreen(id){
+  if(id===currentScreen) return;
+  const from=$('#'+currentScreen), to=$('#'+id);
+  const isLogin = id==='screen-login';
+  gsap.to(from,{opacity:0,y:-18,duration:.35,ease:'power2.in',onComplete(){
+    from.classList.remove('active'); gsap.set(from,{clearProps:'all'});
+    to.classList.add('active');
+    $('#topbar').style.display = isLogin?'none':'flex';
+    $$('.sidebar').forEach(s=>s.classList.remove('open'));
+    window.scrollTo(0,0);
+    gsap.fromTo(to,{opacity:0,y:26},{opacity:1,y:0,duration:.55,ease:'power3.out'});
+    enterAnimations(id);
+    currentScreen=id;
+  }});
+}
+$$('[data-goto]').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.goto)));
+
+/* ====================================================
+   LOGIN
+==================================================== */
+function doLogin(){
+  const email = ($('#loginEmail').value||'').trim().toLowerCase();
+  const pass  = ($('#loginPassword').value||'');
+  const err   = $('#loginError');
+  if(!email||!pass){ err.textContent='Please enter your email and password.'; return; }
+  const user = USERS[email];
+  if(!user||user.pw!==pass){
+    err.textContent='Incorrect email or password. Use the test credentials below.';
+    gsap.fromTo('#loginCard',{x:-10},{x:0,duration:.5,ease:'elastic.out(1,.4)'});
+    return;
+  }
+  err.textContent='';
+  currentUser = {...user, email};
+  $('#roleLabel').textContent = ROLE_LABEL[user.role];
+  gsap.to('#loginBtn',{scale:.96,duration:.1,yoyo:true,repeat:1});
+  toast(`Welcome back, ${user.name}!`, '#10B981');
+  showScreen(ROLE_HOME[user.role]);
+}
+$('#loginBtn').addEventListener('click', doLogin);
+$$('.quick-fill').forEach(b=>b.addEventListener('click',()=>{
+  $('#loginEmail').value=b.dataset.email;
+  $('#loginPassword').value=b.dataset.pass;
+  $('#loginError').textContent='';
+  gsap.fromTo([$('#loginEmail'),$('#loginPassword')],{backgroundColor:'rgba(37,99,235,.18)'},{backgroundColor:'rgba(255,255,255,.02)',duration:.7,ease:'power2.out'});
+  $('#loginBtn').focus();
+}));
+$('#loginEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#loginPassword').focus(); });
+$('#loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+$('#logoutBtn').addEventListener('click',()=>{ currentUser=null; showScreen('screen-login'); toast('Signed out — session closed securely.','#8FA3C0'); });
+
+/* ====================================================
+   SIDEBAR MOBILE + NOTIFICATIONS
+==================================================== */
+$('#menuBtn').addEventListener('click',()=>{
+  const sb=$('#'+currentScreen+' .sidebar');
+  if(sb) sb.classList.toggle('open');
+});
+$('#bellBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  $('#notifPanel').classList.toggle('open');
+  const badge=$('#bellBadge');
+  if(badge.textContent!=='0'){ badge.textContent='0'; gsap.to(badge,{scale:0,duration:.3,ease:'back.in(2)'}); }
+});
+document.addEventListener('click',()=>$('#notifPanel').classList.remove('open'));
+
+/* ====================================================
+   HELPERS
+==================================================== */
+function riskColor(r){ return r>=70?'#EF4444':r>=35?'#F59E0B':'#10B981'; }
+function riskWord(r) { return r>=70?'High':r>=35?'Medium':'Low'; }
+function riskBadge(r){ return r>=70?'b-red':r>=35?'b-amber':'b-green'; }
+
+/* ====================================================
+   HOSPITAL DASHBOARD — dynamic render
+==================================================== */
+function renderHospital(){
+  const claims = getClaims();
+  const total=claims.length;
+  const pending=claims.filter(c=>c.status==='pending').length;
+  const approved=claims.filter(c=>c.status==='approved').length;
+  const rejected=claims.filter(c=>c.status==='rejected').length;
+  const nums=$$('#statsGrid .stat-card .num');
+  [total,pending,approved,rejected].forEach((v,i)=>{ if(nums[i]){nums[i].dataset.count=v;nums[i].textContent='0';} });
+  $('#hospitalRows').innerHTML = claims.slice(0,12).map(c=>{
+    const sb=c.status==='approved'?'b-green':c.status==='rejected'?'b-red':'b-amber';
+    const sl=c.status.charAt(0).toUpperCase()+c.status.slice(1);
+    return `<tr>
+      <td class="claim-id">${c.id}</td>
+      <td class="cell-main"><b>${c.patientName}</b><span>Policy ${c.policy}</span></td>
+      <td>${c.treatment||c.diagnosis}</td>
+      <td class="amt">PKR ${(+c.amount).toLocaleString()}</td>
+      <td><span class="risk-pill">
+        <span class="risk-bar"><i data-risk="${c.fraudScore}" style="background:${riskColor(c.fraudScore)};"></i></span>
+        <span class="badge ${riskBadge(c.fraudScore)}"><span class="bdot"></span>${c.fraudScore} ${riskWord(c.fraudScore)}</span>
+      </span></td>
+      <td><span class="badge ${sb}"><span class="bdot"></span>${sl}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ====================================================
+   OFFICER QUEUE — dynamic render
+==================================================== */
+function buildQueue(){
+  const pending = getClaims().filter(c=>c.status==='pending').sort((a,b)=>b.fraudScore-a.fraudScore);
+  const wrap=$('#queue');
+  const eyebrow=$('#screen-officer .eyebrow');
+  eyebrow.textContent=`Review queue · ${pending.length} claim${pending.length===1?'':'s'} awaiting decision`;
+  if(pending.length===0){
+    wrap.innerHTML='<div style="text-align:center;padding:56px 20px;color:var(--muted);font-size:14px;"><div style="font-size:40px;margin-bottom:14px;">✅</div>All claims reviewed. The queue is empty.</div>';
+    gsap.to('#fraudBanner',{opacity:0,height:0,marginBottom:0,paddingTop:0,paddingBottom:0,duration:.4,ease:'power2.inOut',onComplete(){$('#fraudBanner').style.display='none';}});
+    return;
+  }
+  const hiRisk=pending.filter(c=>c.fraudScore>=70);
+  if(hiRisk.length>0){
+    $('#fraudBanner').style.display='flex';
+    $('#fraudBanner b').textContent=`${hiRisk.length} high-risk claim${hiRisk.length>1?'s':''} need urgent attention`;
+    $('#fraudBanner span').textContent=hiRisk.map(c=>c.id).join(' and ')+' scored above the 80-point fraud threshold.';
+  } else {
+    gsap.to('#fraudBanner',{opacity:0,height:0,marginBottom:0,paddingTop:0,paddingBottom:0,duration:.4,ease:'power2.inOut',onComplete(){$('#fraudBanner').style.display='none';}});
+  }
+  wrap.innerHTML=pending.map(q=>{
+    const flags=q.flags||flagsFor(q.fraudScore);
+    return `
+    <div class="qcard ${q.fraudScore>=70?'hi-risk':''}" data-id="${q.id}">
+      <div class="q-top">
+        <div class="ring-wrap"><svg width="64" height="64" viewBox="0 0 64 64">
+          <circle class="ring-bg" cx="32" cy="32" r="26"/>
+          <circle class="ring-val" cx="32" cy="32" r="26" stroke="${riskColor(q.fraudScore)}" data-risk="${q.fraudScore}"/>
+        </svg><span class="ring-num">${q.fraudScore}</span></div>
+        <div class="q-info"><b>${q.id} · ${q.patientName}</b><div class="q-meta">${q.treatment||q.diagnosis} · ${q.hospital}</div></div>
+        <div class="q-amount"><div class="amt">PKR ${(+q.amount).toLocaleString()}</div><span>${riskWord(q.fraudScore)} fraud risk</span></div>
+        <div class="q-chev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      </div>
+      <div class="q-detail"><div class="q-detail-inner">
+        <div class="flag-list">${flags.map(f=>`<div class="flag"><span class="fdot" style="background:${f[0]};box-shadow:0 0 8px ${f[0]};"></span><div>${f[1]}</div></div>`).join('')}</div>
+        <div class="q-detail-grid">
+          <div class="q-fact"><span>Policy</span><b>${q.policy}</b></div>
+          <div class="q-fact"><span>Stay</span><b>${q.admissionDate} – ${q.dischargeDate}</b></div>
+          <div class="q-fact"><span>Doctor</span><b>${q.doctor}</b></div>
+          <div class="q-fact"><span>Documents</span><b>OCR verified</b></div>
+        </div>
+        <div class="q-actions">
+          <button class="btn btn-green q-approve">✓ Approve</button>
+          <button class="btn btn-red q-reject">✕ Reject</button>
+          <button class="btn btn-amber q-info-btn">Request info</button>
+        </div>
+      </div></div>
+    </div>`;
+  }).join('');
+
+  $$('.qcard .q-top').forEach(top=>{
+    top.addEventListener('click',()=>{
+      const card=top.closest('.qcard'), detail=card.querySelector('.q-detail'), open=card.classList.contains('open');
+      $$('.qcard.open').forEach(c=>{ if(c!==card){c.classList.remove('open');gsap.to(c.querySelector('.q-detail'),{height:0,duration:.4,ease:'power2.inOut'});} });
+      card.classList.toggle('open');
+      if(open) gsap.to(detail,{height:0,duration:.4,ease:'power2.inOut'});
+      else {
+        gsap.set(detail,{height:'auto'}); gsap.from(detail,{height:0,duration:.5,ease:'power3.inOut'});
+        gsap.fromTo(card.querySelectorAll('.flag,.q-fact'),{y:12,opacity:0},{y:0,opacity:1,duration:.4,stagger:.05,delay:.18,ease:'power2.out'});
+      }
+    });
+  });
+
+  function decide(btn,label,color,statusVal){
+    const card=btn.closest('.qcard'), id=card.dataset.id;
+    updateStatus(id, statusVal);
+    toast(`${id} — ${label}`, color);
+    gsap.to(card,{opacity:0,x:60,height:0,marginBottom:-14,duration:.55,ease:'power2.in',delay:.15,onComplete(){
+      card.remove();
+      const left=$$('.qcard').length;
+      eyebrow.textContent=`Review queue · ${left} claim${left===1?'':'s'} awaiting decision`;
+      if(!$$('.qcard.hi-risk').length) gsap.to('#fraudBanner',{opacity:0,height:0,marginBottom:0,paddingTop:0,paddingBottom:0,duration:.5,onComplete(){$('#fraudBanner').style.display='none';}});
+      if(left===0) wrap.innerHTML='<div style="text-align:center;padding:56px 20px;color:var(--muted);font-size:14px;"><div style="font-size:40px;margin-bottom:14px;">✅</div>All claims reviewed. The queue is empty.</div>';
+    }});
+  }
+  $$('.q-approve').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();decide(b,'approved — payout scheduled within 3 working days.','#10B981','approved');}));
+  $$('.q-reject').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();decide(b,'rejected — policyholder notified with reason codes.','#EF4444','rejected');}));
+  $$('.q-info-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const id=b.closest('.qcard').dataset.id;toast(`Information request sent to hospital for ${id}.`,'#F59E0B');gsap.fromTo(b,{scale:1},{scale:.94,duration:.12,yoyo:true,repeat:1});}));
+}
+
+/* ====================================================
+   ENTER ANIMATIONS
+==================================================== */
+function animateCounters(scope){
+  $$('#'+scope+' [data-count]').forEach(el=>{
+    const target=+el.dataset.count, obj={v:0};
+    gsap.to(obj,{v:target,duration:1.6,ease:'power3.out',onUpdate(){el.textContent=Math.round(obj.v).toLocaleString();}});
+  });
+}
+function animateRiskBars(scope){
+  $$('#'+scope+' .risk-bar i').forEach(bar=>{
+    gsap.fromTo(bar,{width:0},{width:bar.dataset.risk+'%',duration:1.1,ease:'power3.out',delay:.35});
+  });
+}
+function animateRings(){
+  $$('.ring-val').forEach(c=>{
+    const r=26,circ=2*Math.PI*r,pct=+c.dataset.risk/100;
+    c.style.strokeDasharray=circ;
+    gsap.fromTo(c,{strokeDashoffset:circ},{strokeDashoffset:circ*(1-pct),duration:1.4,ease:'power3.out',delay:.3});
+  });
+  $$('.ring-num').forEach(n=>{
+    const target=+n.textContent, o={v:0}; n.textContent='0';
+    gsap.to(o,{v:target,duration:1.4,ease:'power3.out',delay:.3,onUpdate(){n.textContent=Math.round(o.v);}});
+  });
+}
+function enterAnimations(id){
+  if(id==='screen-hospital'){
+    renderHospital();
+    gsap.fromTo('#sidebar-hospital',{x:-70,opacity:0},{x:0,opacity:1,duration:.6,ease:'power3.out'});
+    gsap.fromTo('#statsGrid .stat-card',{y:30,opacity:0},{y:0,opacity:1,duration:.6,stagger:.09,ease:'power3.out',delay:.12});
+    gsap.fromTo('#hospitalRows tr',{x:-22,opacity:0},{x:0,opacity:1,duration:.5,stagger:.06,ease:'power2.out',delay:.3});
+    gsap.fromTo('.fab',{scale:0,rotate:-30},{scale:1,rotate:0,duration:.55,ease:'back.out(1.8)',delay:.6});
+    animateCounters('screen-hospital'); animateRiskBars('screen-hospital');
+  }
+  if(id==='screen-officer'){
+    buildQueue();
+    gsap.fromTo('#sidebar-officer',{x:-70,opacity:0},{x:0,opacity:1,duration:.6,ease:'power3.out'});
+    gsap.fromTo('#fraudBanner',{y:-20,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'});
+    setTimeout(()=>{ gsap.fromTo('.qcard',{y:30,opacity:0},{y:0,opacity:1,duration:.55,stagger:.1,ease:'power3.out'}); animateRings(); }, 120);
+  }
+  if(id==='screen-policy'){
+    renderPolicy();
+    gsap.fromTo('#sidebar-policy',{x:-70,opacity:0},{x:0,opacity:1,duration:.6,ease:'power3.out'});
+    gsap.fromTo('.timeline-card',{y:26,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'});
+    gsap.fromTo('.side-col .mini-card',{y:26,opacity:0},{y:0,opacity:1,duration:.55,stagger:.12,ease:'power3.out',delay:.15});
+    drawTimeline();
+  }
+  if(id==='screen-form'){
+    gsap.fromTo('#formCard',{y:28,opacity:0},{y:0,opacity:1,duration:.6,ease:'power3.out'});
+    resetForm();
+  }
+}
+
+/* ====================================================
+   LOGIN ENTRANCE
+==================================================== */
+window.addEventListener('load',()=>{
+  initData();
+  $('#screen-login').classList.add('active');
+  const tl=gsap.timeline();
+  tl.fromTo('#loginCard',{y:46,opacity:0,scale:.96},{y:0,opacity:1,scale:1,duration:.9,ease:'power3.out'})
+    .fromTo('#loginCard .logo-mark',{scale:0,rotate:-20},{scale:1,rotate:0,duration:.7,ease:'back.out(1.7)'},'-=.55')
+    .fromTo('#loginCard h1, #loginCard .login-sub',{y:16,opacity:0},{y:0,opacity:1,duration:.55,stagger:.1,ease:'power2.out'},'-=.35')
+    .fromTo('#loginCard .login-form',{y:20,opacity:0},{y:0,opacity:1,duration:.5,ease:'power2.out'},'-=.25')
+    .fromTo('#loginCard .login-foot',{opacity:0},{opacity:1,duration:.5},'-=.2');
+  const p=$('#pulseLine'), len=p.getTotalLength();
+  gsap.set(p,{strokeDasharray:len,strokeDashoffset:len});
+  gsap.to(p,{strokeDashoffset:0,duration:1.4,ease:'power2.inOut',repeat:-1,repeatDelay:1.6,yoyo:true});
+});
+
+/* ====================================================
+   MULTI-STEP FORM
+==================================================== */
+let step=1; const STEPS=4;
+function goStep(n,dir){
+  const cur=$('.fstep[data-step="'+step+'"]'), nxt=$('.fstep[data-step="'+n+'"]');
+  if(n===4) populateReview();
+  gsap.to(cur,{x:dir>0?-44:44,opacity:0,duration:.32,ease:'power2.in',onComplete(){
+    cur.classList.remove('cur'); nxt.classList.add('cur');
+    gsap.fromTo(nxt,{x:dir>0?44:-44,opacity:0},{x:0,opacity:1,duration:.42,ease:'power3.out'});
+  }});
+  step=n;
+  gsap.to('#progressFill',{width:(step/STEPS*100)+'%',duration:.5,ease:'power2.inOut'});
+  $$('#stepLabels span').forEach((s,i)=>{ s.classList.toggle('cur',i===step-1); s.classList.toggle('done',i<step-1); });
+  $('#prevBtn').style.visibility=step===1?'hidden':'visible';
+  $('#nextBtn').innerHTML=step===STEPS?'Submit claim ✓':'Continue →';
+}
+$('#nextBtn').addEventListener('click',()=>{
+  if(!validateStep(step)) return;
+  if(step<STEPS) goStep(step+1,1); else submitClaim();
+});
+$('#prevBtn').addEventListener('click',()=>{ if(step>1) goStep(step-1,-1); });
+
+function validateStep(s){
+  let required=[];
+  if(s===1) required=['f-name','f-cnic','f-policy'];
+  if(s===2) required=['f-hospital','f-doctor','f-diagnosis','f-amount'];
+  for(const id of required){
+    const el=$('#'+id);
+    if(!el.value||!el.value.trim()){
+      el.focus();
+      gsap.fromTo(el,{x:-8},{x:0,duration:.4,ease:'elastic.out(1,.4)'});
+      el.style.borderColor='var(--red)';
+      toast('Please fill in all required fields before continuing.','#EF4444');
+      setTimeout(()=>{el.style.borderColor='';},1200);
+      return false;
+    }
+  }
+  return true;
+}
+
+function populateReview(){
+  const rows = $('#formCard .review-grid');
+  if(!rows) return;
+  const hospital = $('#f-hospital');
+  const hospitalName = (hospital && hospital.value) ? hospital.options[hospital.selectedIndex].text : '—';
+  rows.innerHTML = `
+    <div class="rrow"><span>Patient</span><b>${$('#f-name').value||'—'}</b></div>
+    <div class="rrow"><span>Policy</span><b>${$('#f-policy').value||'—'}</b></div>
+    <div class="rrow"><span>Hospital</span><b>${hospitalName}</b></div>
+    <div class="rrow"><span>Doctor</span><b>${$('#f-doctor').value||'—'}</b></div>
+    <div class="rrow"><span>Diagnosis</span><b>${$('#f-diagnosis').value||'—'}</b></div>
+    <div class="rrow"><span>Stay</span><b>${$('#f-admission').value||'—'} → ${$('#f-discharge').value||'—'}</b></div>
+    <div class="rrow"><span>Documents</span><b>3 verified</b></div>
+    <div class="rrow"><span>Claimed amount</span><b>PKR ${$('#f-amount').value||'—'}</b></div>`;
+}
+
+function submitClaim(){
+  const newId = nextId();
+  const hospital = $('#f-hospital');
+  const hospitalName = hospital ? hospital.options[hospital.selectedIndex].text : 'Liaquat National Hospital';
+  const amtRaw  = ($('#f-amount').value||'196500').replace(/[^0-9]/g,'');
+  const amt     = parseInt(amtRaw)||196500;
+  const score   = calcFraudScore(amt);
+  addClaim({
+    id: newId,
+    patientName:  $('#f-name').value.trim(),
+    cnic:         $('#f-cnic').value.trim(),
+    policy:       $('#f-policy').value.trim(),
+    dob:          $('#f-dob').value||'',
+    contact:      $('#f-contact').value||'',
+    relationship: $('#f-relation').value||'Self',
+    hospital:     hospitalName,
+    doctor:       $('#f-doctor').value.trim(),
+    admissionDate:$('#f-admission').value||'',
+    dischargeDate:$('#f-discharge').value||'',
+    diagnosis:    $('#f-diagnosis').value.trim(),
+    amount:       amt,
+    treatment:    $('#f-diagnosis').value.trim()||'Treatment',
+    fraudScore:   score,
+    status:       'pending',
+    flags:        flagsFor(score),
+    timestamp:    new Date().toISOString()
+  });
+  $('#successView .sid').textContent = newId;
+  const cur=$('.fstep[data-step="4"]');
+  gsap.to([cur,'#formNav'],{opacity:0,y:-16,duration:.35,ease:'power2.in',onComplete(){
+    cur.classList.remove('cur'); $('#formNav').style.display='none';
+    const sv=$('#successView'); sv.classList.add('show');
+    gsap.fromTo(sv,{opacity:0,scale:.94},{opacity:1,scale:1,duration:.5,ease:'power3.out'});
+    const c=$('#sCircle'),t=$('#sTick'),cl=c.getTotalLength(),tl2=t.getTotalLength();
+    gsap.set(c,{strokeDasharray:cl,strokeDashoffset:cl}); gsap.set(t,{strokeDasharray:tl2,strokeDashoffset:tl2});
+    gsap.to(c,{strokeDashoffset:0,duration:.9,ease:'power2.inOut'}); gsap.to(t,{strokeDashoffset:0,duration:.55,delay:.7,ease:'power2.out'});
+    gsap.fromTo('.check-wrap .glow',{scale:.4,opacity:0},{scale:1,opacity:1,duration:.8,delay:.6,ease:'power2.out'});
+    toast(`Claim ${newId} submitted — now live in the review queue.`,'#10B981');
+  }});
+}
+function resetForm(){
+  $$('.fstep').forEach(s=>s.classList.remove('cur')); $('.fstep[data-step="1"]').classList.add('cur');
+  $('#successView').classList.remove('show'); $('#formNav').style.display='flex';
+  gsap.set('#formNav',{clearProps:'all'}); step=1;
+  gsap.set('#progressFill',{width:'25%'});
+  $$('#stepLabels span').forEach((s,i)=>{ s.classList.toggle('cur',i===0); s.classList.remove('done'); });
+  $('#prevBtn').style.visibility='hidden'; $('#nextBtn').innerHTML='Continue →';
+}
+$('#newClaimBtn').addEventListener('click',resetForm);
+$('#uploadZone').addEventListener('click',()=>{
+  const item=document.createElement('div'); item.className='doc-item';
+  item.innerHTML=`<span class="di"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/></svg></span><div><b>lab-reports.pdf</b><span>2.1 MB · scanning…</span></div><span class="ok" style="color:var(--amber);">⟳ Scanning</span>`;
+  $('#docList').appendChild(item);
+  gsap.fromTo(item,{y:14,opacity:0},{y:0,opacity:1,duration:.4,ease:'power2.out'});
+  setTimeout(()=>{ item.querySelector('.ok').textContent='✓ Verified'; item.querySelector('.ok').style.color='var(--green)'; item.querySelector('span + div span').textContent='2.1 MB · verified by OCR'; toast('lab-reports.pdf verified by OCR.','#10B981'); },1600);
+});
+
+/* ====================================================
+   POLICYHOLDER TIMELINE
+==================================================== */
+function drawTimeline(){
+  const line=$('#tlProgress');
+  if(line){
+    const target = (window._tlTarget!=null) ? window._tlTarget : 68;
+    gsap.fromTo(line,{attr:{y2:0}},{attr:{y2:target},duration:1.6,ease:'power3.inOut',delay:.3});
+  }
+  gsap.fromTo('.tl-stage',{x:-18,opacity:0},{x:0,opacity:1,duration:.5,stagger:.18,delay:.3,ease:'power2.out'});
+  const cov=$('#coverageFill');
+  if(cov) gsap.fromTo(cov,{width:0},{width:cov.dataset.pct+'%',duration:1.3,ease:'power3.out',delay:.6});
+}
+
+/* ====================================================
+   POLICYHOLDER — dynamic claim list + real-status timeline
+==================================================== */
+let selectedPolicyClaimId = null;
+
+const ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4 10-11"/></svg>';
+const ICON_CLOCK='<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+const ICON_CARD ='<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
+const ICON_X    ='<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+function fmtDate(d){ if(!d) return ''; try{ const dt=new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}catch(e){return d;} }
+
+function statusBadge(s){
+  if(s==='approved') return '<span class="badge b-green"><span class="bdot"></span>Approved</span>';
+  if(s==='rejected') return '<span class="badge b-red"><span class="bdot"></span>Rejected</span>';
+  return '<span class="badge b-blue"><span class="bdot"></span>In review</span>';
+}
+
+function renderPolicy(){
+  const claims = getClaims();
+  const list = $('#policyClaimList');
+  if(!claims.length){
+    list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 2px;">No claims yet. Submit one from the Hospital portal to track it here.</div>';
+    $('#policyTimeline').innerHTML='<div style="color:var(--muted);font-size:14px;padding:20px;">No claim selected.</div>';
+    return;
+  }
+  if(!selectedPolicyClaimId || !claims.find(c=>c.id===selectedPolicyClaimId)) selectedPolicyClaimId=claims[0].id;
+  // claim list
+  list.innerHTML = claims.map(c=>`
+    <div class="pc-item ${c.id===selectedPolicyClaimId?'sel':''}" data-id="${c.id}">
+      <div class="pc-l"><b>${c.id}</b><span>${c.patientName} · PKR ${(+c.amount).toLocaleString()}</span></div>
+      ${statusBadge(c.status)}
+    </div>`).join('');
+  list.querySelectorAll('.pc-item').forEach(el=>el.addEventListener('click',()=>{
+    selectedPolicyClaimId=el.dataset.id;
+    list.querySelectorAll('.pc-item').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+    renderPolicyTimeline(claims.find(c=>c.id===selectedPolicyClaimId));
+    drawTimeline();
+  }));
+  // coverage = sum of approved
+  // Coverage = ONLY the logged-in policyholder's own approved claims (not everyone's)
+  const myName = (currentUser && currentUser.name) ? currentUser.name : 'Ayesha Siddiqui';
+  const used = claims.filter(c=>c.status==='approved' && c.patientName===myName).reduce((s,c)=>s+(+c.amount),0);
+  const limit=1500000, pct=Math.min(100, Math.round(used/limit*100));
+  $('#coverageUsed').textContent='PKR '+used.toLocaleString();
+  $('#coveragePctNote').textContent=pct+'% used';
+  $('#coverageRemNote').textContent='PKR '+Math.max(0,limit-used).toLocaleString()+' remaining';
+  $('#coverageFill').dataset.pct=pct;
+  renderPolicyTimeline(claims.find(c=>c.id===selectedPolicyClaimId));
+}
+
+function renderPolicyTimeline(c){
+  if(!c){ $('#policyTimeline').innerHTML=''; return; }
+  const sub=$('#policySubtitle'); if(sub) sub.textContent=`Claim ${c.id} · ${c.diagnosis||c.treatment||'Treatment'} · ${c.hospital||''}`;
+  const risk = c.fraudScore>=70?'high':c.fraudScore>=35?'medium':'low';
+  const filed = fmtDate(c.timestamp||c.dischargeDate||c.admissionDate);
+  const pending = c.status==='pending';
+  // stage states
+  const reviewState = pending?'cur':'done';
+  let decisionStage;
+  if(c.status==='approved'){
+    decisionStage=`<div class="tl-stage done"><span class="tl-node">${ICON_CHECK}</span>
+      <b>Approved &amp; payout</b><span class="tl-when">Completed</span>
+      <p>Your claim was approved. PKR ${(+c.amount).toLocaleString()} is scheduled to the hospital within 3 working days.</p></div>`;
+    window._tlTarget=100;
+  } else if(c.status==='rejected'){
+    decisionStage=`<div class="tl-stage rejected"><span class="tl-node">${ICON_X}</span>
+      <b>Claim rejected</b><span class="tl-when" style="color:var(--red);">Completed</span>
+      <p>This claim was not approved. You can contact support or ask the hospital to resubmit with additional documents.</p></div>`;
+    window._tlTarget=100;
+  } else {
+    decisionStage=`<div class="tl-stage todo"><span class="tl-node">${ICON_CARD}</span>
+      <b>Decision &amp; payout</b><span class="tl-when" style="color:var(--muted);">Pending</span>
+      <p>Approved amounts are transferred to the hospital within 3 working days.</p></div>`;
+    window._tlTarget=68;
+  }
+  $('#policyTimeline').innerHTML=`
+    <h3>Claim ${c.id} · PKR ${(+c.amount).toLocaleString()}</h3>
+    <div class="tc-sub">${c.hospital||'Hospital'} · filed ${filed||'recently'}</div>
+    <div class="tl">
+      <svg class="tl-path" viewBox="0 0 4 100" preserveAspectRatio="none">
+        <line x1="2" y1="0" x2="2" y2="100" stroke="rgba(143,163,192,.25)" stroke-width="3"/>
+        <line id="tlProgress" x1="2" y1="0" x2="2" y2="100" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="tl-stage done"><span class="tl-node">${ICON_CHECK}</span>
+        <b>Submitted</b><span class="tl-when">${filed||'Recently'}</span>
+        <p>${c.hospital||'The hospital'} filed your claim for ${c.diagnosis||c.treatment||'treatment'}.</p></div>
+      <div class="tl-stage done"><span class="tl-node">${ICON_CHECK}</span>
+        <b>AI fraud screening</b><span class="tl-when">Completed</span>
+        <p>Screened automatically with a ${risk} risk score of ${c.fraudScore}/100.</p></div>
+      <div class="tl-stage ${reviewState}"><span class="tl-node">${pending?ICON_CLOCK:ICON_CHECK}</span>
+        <b>Under review</b><span class="tl-when">${pending?'In progress':'Completed'}</span>
+        <p>${pending?'An insurance officer is verifying the payout against your coverage. Typically done within 24 hours.':'Reviewed by an insurance officer.'}</p></div>
+      ${decisionStage}
+    </div>`;
+}
+
+/* ====================================================
+   SCROLL REVEALS
+==================================================== */
+ScrollTrigger.batch('.panel, .mini-card',{
+  start:'top 92%',
+  onEnter:els=>gsap.fromTo(els,{y:24,opacity:0},{y:0,opacity:1,duration:.6,stagger:.08,ease:'power3.out'}),
+  once:true
+});
+</script>
+</body>
+</html>
